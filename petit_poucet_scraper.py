@@ -9,6 +9,9 @@ from requests.auth import HTTPBasicAuth
 
 class PetitPoucet:
 
+    BASIC_AUTH_USERNAME = 'Thumb'
+    BASIC_AUTH_PASSWORD = 'Scraper'
+
     def __init__(self, jsonDataPath, initialLink, initialIndex='0'):
         """
         :param jsonDataPath: The path of the json file -> data/petit_poucet_input.json
@@ -20,12 +23,18 @@ class PetitPoucet:
         if not validators.url(initialLink):
             raise Exception(initialLink + ' is not a valid Url')
 
-        self.data = json.load(open(jsonDataPath))
+        try:
+            f_data = open(jsonDataPath, 'r')
+            self.data = json.load(f_data)
+            f_data.close()
+        except Exception as e:
+            print('Couldn\'t read input json file : ' + str(e))
+
         self.initial_link = initialLink
         self.current_link = initialLink
         self.current_index = initialIndex
         if self.current_index not in self.data:
-            raise Exception('The initial index \'initialIndex\' = ' + self.current_index + ', is not in data')
+            raise ValueError('The initial index \'initialIndex\' = ' + self.current_index + ', is not in data')
         self.current_web_page = html.document_fromstring('<html>')
         self.web_page_counter = 0
 
@@ -49,7 +58,8 @@ class PetitPoucet:
     def get_current_web_page(self):
         """Fetches the html document at self.current_link
         """
-        web_page = requests.get(self.current_link, auth=HTTPBasicAuth('Thumb', 'Scraper'))
+        web_page = requests.get(self.current_link,
+                                auth=HTTPBasicAuth(self.BASIC_AUTH_USERNAME, self.BASIC_AUTH_PASSWORD))
         if web_page.status_code != 200:
             raise Exception('Couldn\'t fetch page ' + self.current_link)
         self.current_web_page = html.document_fromstring(web_page.text)
@@ -70,3 +80,4 @@ if __name__ == '__main__':
         mon_petit_poucet.run_web_scraper()
 
     main()
+
